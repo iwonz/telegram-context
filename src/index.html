@@ -8,16 +8,16 @@
   <title>Telegram contest</title>
 </head>
 <body>
-  <h1>Followers</h1>
-  <canvas id="chart"></canvas>
-  <label>
-    <input type="checkbox">
-    Joined
-  </label>
-  <label>
-    <input type="checkbox">
-    Left
-  </label>
-  <button>Switch to Night Mode</button>
+  <div class="chart">
+    <div class="chart__content">
+      <h1 class="chart__header">Followers</h1>
+
+      <canvas id="chart"></canvas>
+
+      <div class="chart__switches"></div>
+
+      <button class="change-mode-button" onClick="modeToggler.toggle();"></button>
+    </div>
+  </div>
 </body>
 </html>
