@@ -2,7 +2,6 @@ import '../css/main.scss';
 
 import { ModeToggler } from './mode-toggler/mode-toggler';
 import { Chart } from './chart/chart';
-import { Timeline } from './timeline/timeline';
 
 import charts from '../chart_data.json';
 
@@ -13,28 +12,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.chart = new Chart({
     selector: '#chart',
+    timeline: {
+      enabled: true,
+      selector: '#timeline'
+    },
     data: charts[0]
   });
 
-  const switches = document.querySelector('.chart__switches');
-
-  Object.keys(charts[0].names).forEach((key) => {
-    const label = document.createElement('label');
-
-    label.classList.add('check');
-    label.innerHTML = `
-      <input class="check__input" type="checkbox" value="${key}" checked>
-      <span class="check__value" >${charts[0].names[key]}</span>
-    `;
-
-    switches.appendChild(label);
-  });
-
-  chart.draw();
-
-  window.timeline = new Timeline({
-    data: chart.getVisibleColumns()
-  });
-
-  timeline.init();
+  // const switches = document.querySelector('.chart__switches');
+  //
+  // Object.keys(chart.getGraphs()).forEach((key) => {
+  //   const label = document.createElement('label');
+  //
+  //   label.classList.add('check');
+  //   label.innerHTML = `
+  //     <input class="check__input" type="checkbox" value="${key}" checked>
+  //     <span class="check__value" >${charts[0].names[key]}</span>
+  //   `;
+  //
+  //   switches.appendChild(label);
+  // });
 });

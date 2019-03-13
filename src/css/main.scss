@@ -38,9 +38,11 @@ body {
 
   &_light { background-color: #fff; }
   &_light &__header { color: #000; }
+  &_light .timeline { background-color: #fff; }
 
   &_night { background-color: #242f3e; }
   &_night &__header { color: #fff; }
+  &_night .timeline { background-color: #242f3e; }
 }
 
 .change-mode-button {
@@ -100,5 +102,31 @@ body {
   &__value {
     font-size: 24px;
     color: #43484b;
+  }
+}
+
+.timeline {
+  position: relative;
+  background-color: #fff;
+  margin-top: 45px;
+
+  &__shadow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, .7);
+  }
+
+  &__controller {
+    position: absolute;
+    border: 3px solid #ddeaf3;
+    border-left: 12px solid #ddeaf3;
+    border-right: 12px solid #ddeaf3;
+    right: 0;
+    top: 0;
+    width: 25%;
+    height: 100%;
+    user-select: none;
+    cursor: move;
   }
 }
