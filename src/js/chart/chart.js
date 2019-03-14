@@ -24,14 +24,13 @@ export class Chart {
 
     this.canvas = document.querySelector(this.config.selector);
     this.canvas.width = this.canvas.parentNode.offsetWidth;
-    this.canvas.height = 500;
+    this.canvas.height = this.canvas.parentNode.offsetHeight * 0.6;
     this.ctx = this.canvas.getContext('2d');
 
     if (config.timeline.enabled) {
       this.timeline = new Timeline(this, {
         ...this.config.timeline,
-        onRangeChange: (range) => {
-          this.visibleRange = range;
+        onRangeChange: () => {
           this.draw();
         }
       });
@@ -104,7 +103,7 @@ export class Chart {
           x + columnWidth,
           this.canvas.height - columns[i + 1] * coef,
           this.model[key].lineColor,
-          5
+          3
         );
 
         x += columnWidth;

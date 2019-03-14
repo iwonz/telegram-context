@@ -16,7 +16,7 @@ export class Timeline {
 
     this.canvas = document.querySelector(this.config.selector);
     this.canvas.width = this.canvas.parentNode.offsetWidth;
-    this.canvas.height = this.config.height;
+    this.canvas.height = this.chart.canvas.parentNode.offsetHeight * 0.75;
     this.ctx = this.canvas.getContext('2d');
 
     this.controller = document.querySelector(this.config.controller.selector);
@@ -88,7 +88,7 @@ export class Timeline {
           x + columnWidth,
           this.canvas.height - this.chart.model[key].columns[i + 1] * coef,
           this.chart.model[key].lineColor,
-          3
+          2
         );
 
         x += columnWidth;
