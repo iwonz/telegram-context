@@ -1,4 +1,4 @@
-import { getGraphsMaxValue, drawLine } from '../utils/utils';
+import { getGraphsMaxValue, drawLine, addDragListener } from '../utils/utils';
 
 export class Timeline {
   constructor(chart, config) {
@@ -16,37 +16,76 @@ export class Timeline {
 
     this.canvas = document.querySelector(this.config.selector);
     this.canvas.width = this.canvas.parentNode.offsetWidth;
-    this.canvas.height = this.chart.canvas.parentNode.offsetHeight * 0.75;
+    this.canvas.height = this.chart.canvas.height * 0.25;
     this.ctx = this.canvas.getContext('2d');
 
     this.controller = document.querySelector(this.config.controller.selector);
+    this.shadowLeft = document.querySelector('.timeline__shadow_left');
+    this.shadowRight = document.querySelector('.timeline__shadow_right');
+    this.resizeLeft = document.querySelector('.timeline__controller-resize_left');
+    this.resizeRight = document.querySelector('.timeline__controller-resize_right');
 
     this.addEventListeners();
 
     this.drawGraphs();
+    this.updateShadows();
+  }
+
+  onRangeChanged() {
+    this.updateShadows();
+
+    this.config.onRangeChange(this.getRange());
   }
 
   addEventListeners() {
-    this.controller.addEventListener('mousedown', (event) => this._controllerHooked = event.pageX);
+    // this.controller.addEventListener('mousedown', (event) => this._controllerHooked = event.pageX);
+    //
+    // this.controller.addEventListener('mousemove', (event) => {
+    //   if (this._controllerHooked === null) { return; }
+    //
+    //   const maxControllerRight = this.canvas.width - this.controller.offsetWidth;
+    //   const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
+    //   let newControllerRight = controllerRight + (this._controllerHooked - event.pageX);
+    //
+    //   if (newControllerRight <= 0) { newControllerRight = 0; }
+    //   if (newControllerRight >= maxControllerRight) { newControllerRight = maxControllerRight; }
+    //
+    //   this.controller.style.right = newControllerRight + 'px';
+    //   this._controllerHooked = event.pageX;
+    //
+    //   this.onRangeChanged();
+    // });
+    //
+    // this.controller.addEventListener('mouseout', () => this._controllerHooked = null);
+    // this.controller.addEventListener('mouseup', () => this._controllerHooked = null);
 
-    this.controller.addEventListener('mousemove', (event) => {
-      if (this._controllerHooked === null) { return; }
+    addDragListener(this.resizeLeft, (delta) => {
+      console.log(delta);
+      const newControllerWidth = this.controller.offsetWidth + delta;
 
-      const maxControllerRight = this.canvas.width - this.controller.offsetWidth;
-      const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
-      let newControllerRight = controllerRight + (this._controllerHooked - event.pageX);
+      this.controller.style.width = newControllerWidth + 'px';
 
-      if (newControllerRight <= 0) { newControllerRight = 0; }
-      if (newControllerRight >= maxControllerRight) { newControllerRight = maxControllerRight; }
-
-      this.controller.style.right = newControllerRight + 'px';
-      this._controllerHooked = event.pageX;
-
-      this.config.onRangeChange(this.getRange());
+      this.onRangeChanged();
     });
 
-    this.controller.addEventListener('mouseout', () => this._controllerHooked = null);
-    this.controller.addEventListener('mouseup', () => this._controllerHooked = null);
+    // addDragListener(this.resizeRight, (delta) => {
+    //   const newControllerWidth = this.controller.offsetWidth - delta;
+    //   const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
+    //
+    //   const widthDiff = this.controller.offsetWidth - newControllerWidth;
+    //
+    //   this.controller.style.right = controllerRight + widthDiff + 'px';
+    //   this.controller.style.width = newControllerWidth + 'px';
+    //
+    //   this.onRangeChanged();
+    // });
+  }
+
+  updateShadows() {
+    const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
+
+    this.shadowLeft.style.width = this.canvas.width - controllerRight - this.controller.offsetWidth + 'px';
+    this.shadowRight.style.width = controllerRight + 'px';
   }
 
   getColumnWidth() {

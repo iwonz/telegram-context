@@ -24,7 +24,7 @@ export class Chart {
 
     this.canvas = document.querySelector(this.config.selector);
     this.canvas.width = this.canvas.parentNode.offsetWidth;
-    this.canvas.height = this.canvas.parentNode.offsetHeight * 0.6;
+    this.canvas.height = this.canvas.parentNode.offsetHeight * 0.4;
     this.ctx = this.canvas.getContext('2d');
 
     if (config.timeline.enabled) {
@@ -36,16 +36,7 @@ export class Chart {
       });
     }
 
-    this.addEventListeners();
-
     this.draw();
-  }
-
-  addEventListeners() {
-    this.canvas.addEventListener('mousemove', (event) => {
-      console.log();
-      console.log(event.layerX, event.layerY);
-    });
   }
 
   getModel(data) {
@@ -77,6 +68,16 @@ export class Chart {
   getVisibleGraphs() {
     return Object.keys(this.model).reduce((graphs, key) => {
       if (key !== 'x' && this.model[key].visible) {
+        graphs[key] = this.model[key];
+      }
+
+      return graphs;
+    }, {});
+  }
+
+  getGraphs() {
+    return Object.keys(this.model).reduce((graphs, key) => {
+      if (key !== 'x') {
         graphs[key] = this.model[key];
       }
 

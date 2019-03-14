@@ -14,14 +14,18 @@
 
       <canvas id="chart"></canvas>
       <div class="timeline">
-        <div class="timeline__shadow"></div>
-        <div class="timeline__controller"></div>
+        <div class="timeline__shadow timeline__shadow_left"></div>
+        <div class="timeline__shadow timeline__shadow_right"></div>
+        <div class="timeline__controller">
+          <div class="timeline__controller-resize timeline__controller-resize_left"></div>
+          <div class="timeline__controller-resize timeline__controller-resize_right"></div>
+        </div>
         <canvas id="timeline"></canvas>
       </div>
 
       <div class="chart__switches"></div>
 
-      <button class="change-mode-button" style="display: none;" onClick="modeToggler.toggle();"></button>
+      <button class="change-mode-button" onClick="modeToggler.toggle();"></button>
     </div>
   </div>
 </body>

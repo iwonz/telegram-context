@@ -6,7 +6,8 @@ import { Chart } from './chart/chart';
 document.addEventListener('DOMContentLoaded', () => {
   window.modeToggler = new ModeToggler();
 
-  import('../chart_data.json')
+  fetch('chart_data.json')
+    .then((response) => response.json())
     .then((charts) => {
       console.log('>>> CHARTS', charts);
 
