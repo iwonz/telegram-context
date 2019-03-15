@@ -40,9 +40,7 @@ export class Chart {
   }
 
   getModel(data) {
-    const model = {};
-
-    data.columns.forEach((column) => {
+    return data.columns.reduce((model, column) => {
       model[column[0]] = {
         columns: column.slice(1),
         type: data.types[column[0]],
@@ -50,16 +48,16 @@ export class Chart {
         lineColor: data.colors[column[0]],
         visible: true
       };
-    });
 
-    return model;
+      return model;
+    }, {});
   }
 
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.drawGraphs();
     this.drawY();
+    this.drawGraphs();
   }
 
   /**

@@ -49,26 +49,40 @@ export function drawText(ctx, text, x, y, fontSize, color, font = 'Arial, Tahoma
   ctx.fillText(text, x, y);
 }
 
+function addEventListeners(element, events, cb) {
+  events.split(' ').forEach((event) => {
+    element.addEventListener(event, cb);
+  });
+}
+
+function removeEventListeners(element, events, cb) {
+  events.split(' ').forEach((event) => {
+    element.removeEventListener(event, cb);
+  });
+}
+
 export function addDragListener(element, cb) {
   let beginEvent = null;
 
-  element.addEventListener('mousedown', (event) => {
+  addEventListeners(element, 'mousedown touchstart', (event) => {
     event.stopPropagation();
     beginEvent = event;
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    addEventListeners(document, 'mousemove touchmove', onMouseMove);
+    addEventListeners(document, 'mouseup touchend', onMouseUp);
   });
 
   function onMouseMove(event) {
     if (beginEvent === null) { return; }
 
     cb(beginEvent.pageX - event.pageX);
+
+    beginEvent = event;
   }
 
   function onMouseUp() {
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
+    removeEventListeners(document, 'mousemove touchmove', onMouseMove);
+    removeEventListeners(document, 'mouseup touchend', onMouseUp);
 
     beginEvent = null;
   }

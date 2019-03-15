@@ -38,47 +38,42 @@ export class Timeline {
   }
 
   addEventListeners() {
-    // this.controller.addEventListener('mousedown', (event) => this._controllerHooked = event.pageX);
-    //
-    // this.controller.addEventListener('mousemove', (event) => {
-    //   if (this._controllerHooked === null) { return; }
-    //
-    //   const maxControllerRight = this.canvas.width - this.controller.offsetWidth;
-    //   const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
-    //   let newControllerRight = controllerRight + (this._controllerHooked - event.pageX);
-    //
-    //   if (newControllerRight <= 0) { newControllerRight = 0; }
-    //   if (newControllerRight >= maxControllerRight) { newControllerRight = maxControllerRight; }
-    //
-    //   this.controller.style.right = newControllerRight + 'px';
-    //   this._controllerHooked = event.pageX;
-    //
-    //   this.onRangeChanged();
-    // });
-    //
-    // this.controller.addEventListener('mouseout', () => this._controllerHooked = null);
-    // this.controller.addEventListener('mouseup', () => this._controllerHooked = null);
+    addDragListener(this.controller, (delta) => {
+      const maxControllerRight = this.canvas.width - this.controller.offsetWidth;
+      const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
+      let newControllerRight = controllerRight + delta;
 
-    addDragListener(this.resizeLeft, (delta) => {
-      console.log(delta);
+      if (newControllerRight <= 0) { newControllerRight = 0; }
+      if (newControllerRight >= maxControllerRight) { newControllerRight = maxControllerRight; }
+
+      this.controller.style.right = newControllerRight + 'px';
+
+      this.onRangeChanged();
+    });
+
+    addDragListener(this.resizeLeft, (delta, ) => {
       const newControllerWidth = this.controller.offsetWidth + delta;
+
+      const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
+
+      if (controllerRight + newControllerWidth > this.canvas.width) { return; }
 
       this.controller.style.width = newControllerWidth + 'px';
 
       this.onRangeChanged();
     });
 
-    // addDragListener(this.resizeRight, (delta) => {
-    //   const newControllerWidth = this.controller.offsetWidth - delta;
-    //   const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
-    //
-    //   const widthDiff = this.controller.offsetWidth - newControllerWidth;
-    //
-    //   this.controller.style.right = controllerRight + widthDiff + 'px';
-    //   this.controller.style.width = newControllerWidth + 'px';
-    //
-    //   this.onRangeChanged();
-    // });
+    addDragListener(this.resizeRight, (delta) => {
+      const newControllerWidth = this.controller.offsetWidth - delta;
+      const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
+
+      const widthDiff = this.controller.offsetWidth - newControllerWidth;
+
+      this.controller.style.right = controllerRight + widthDiff + 'px';
+      this.controller.style.width = newControllerWidth + 'px';
+
+      this.onRangeChanged();
+    });
   }
 
   updateShadows() {
