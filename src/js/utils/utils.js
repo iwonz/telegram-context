@@ -1,15 +1,18 @@
-export function getGraphsMaxValue(charts) {
+export function getGraphsValuesRange(charts) {
+  let minValue = 0;
   let maxValue = 0;
 
   Object.keys(charts).forEach((key) => {
+    const min = Math.min(...charts[key].columns);
     const max = Math.max(...charts[key].columns);
 
-    if (max > maxValue) {
-      maxValue = max;
-    }
+    minValue = min < minValue ? min : minValue;
+    maxValue = max > maxValue ? max : maxValue;
   });
 
-  return maxValue;
+  if (minValue > 0) { minValue = 0; }
+
+  return { min: minValue, max: maxValue };
 }
 
 /**

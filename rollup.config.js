@@ -3,6 +3,42 @@ import postcss from 'rollup-plugin-postcss';
 import babel from 'rollup-plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 import copy from 'rollup-plugin-copy-glob';
+import browsersync from 'rollup-plugin-browsersync';
+
+const isProduction = process.env.MODE !== 'development';
+
+const plugins = [
+  html({
+    template: 'src/index.html'
+  }),
+  postcss({
+    extract: 'dist/css/bundle.css'
+  }),
+  babel({
+    exclude: 'node_modules/**',
+    presets: ['@babel/preset-env']
+  }),
+  copy([
+    { files: 'src/chart_data.json', dest: 'dist' }
+  ])
+];
+
+if (isProduction) {
+  plugins.push(
+    terser()
+  );
+} else {
+  plugins.push(
+    browsersync({
+      open: 'local',
+      notify: true,
+      minify: false,
+      cors: false,
+      server: 'dist',
+      port: 3000
+    })
+  )
+}
 
 export default {
   input: 'src/js/index.js',
@@ -10,20 +46,5 @@ export default {
     file: 'dist/js/bundle.js',
     format: 'umd'
   },
-  plugins: [
-    html({
-      template: 'src/index.html'
-    }),
-    postcss({
-      extract: 'dist/css/bundle.css'
-    }),
-    babel({
-      exclude: 'node_modules/**',
-      presets: ['@babel/preset-env']
-    }),
-    terser(),
-    copy([
-      { files: 'src/chart_data.json', dest: 'dist' }
-    ])
-  ]
+  plugins
 };

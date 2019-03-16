@@ -1,4 +1,4 @@
-import { getGraphsMaxValue, drawLine, addDragListener } from '../utils/utils';
+import { getGraphsValuesRange, drawLine, addDragListener } from '../utils/utils';
 
 export class Timeline {
   constructor(chart, config) {
@@ -8,6 +8,8 @@ export class Timeline {
 
     this.config = Object.assign({}, {
       selector: '#timeline',
+      marginTop: 4,
+      marginBottom: 4,
       controller: {
         selector: '.timeline__controller',
       },
@@ -109,7 +111,7 @@ export class Timeline {
 
     const graphs = this.chart.getVisibleGraphs();
     const columnWidth = this.getColumnWidth();
-    const coef = this.canvas.height / getGraphsMaxValue(graphs);
+    const coef = (this.canvas.height - this.config.marginBottom - this.config.marginTop) / getGraphsValuesRange(graphs).max;
 
     Object.keys(graphs).forEach((key) => {
       let x = 0;
@@ -118,9 +120,9 @@ export class Timeline {
         drawLine(
           this.ctx,
           x,
-          this.canvas.height - this.chart.model[key].columns[i] * coef,
+          this.canvas.height - this.chart.model[key].columns[i] * coef  - this.config.marginBottom,
           x + columnWidth,
-          this.canvas.height - this.chart.model[key].columns[i + 1] * coef,
+          this.canvas.height - this.chart.model[key].columns[i + 1] * coef  - this.config.marginBottom,
           this.chart.model[key].lineColor,
           2
         );
