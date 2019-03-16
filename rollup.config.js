@@ -12,15 +12,16 @@ const plugins = [
     template: 'src/index.html'
   }),
   postcss({
-    extract: 'dist/css/bundle.css'
+    extract: 'dist/css/bundle.css',
+    minimize: isProduction
   }),
   babel({
     exclude: 'node_modules/**',
     presets: ['@babel/preset-env']
   }),
   copy([
-    { files: 'src/chart_data.json', dest: 'dist' }
-  ])
+    { files: 'src/assets/**/*', dest: 'dist/assets' }
+  ], { verbose: isProduction, watch: !isProduction })
 ];
 
 if (isProduction) {
