@@ -2,10 +2,6 @@
   box-shadow: 0px 0px 0px 1px red;
 }
 
-#timeline {
-  box-shadow: 0px 0px 0px 1px red;
-}
-
 * {
   margin: 0;
   padding: 0;
@@ -37,7 +33,7 @@ body {
   }
 
   &__header {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
     margin-bottom: 15px;
   }
@@ -50,21 +46,30 @@ body {
 
   &__switches {
     margin-top: 15px;
+    display: flex;
+    overflow: scroll;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   &_light { background-color: #fff; }
   &_light &__header { color: #000; }
   &_light .timeline { background-color: #fff; }
-  &_light .timeline__shadow { background-color: rgba(255, 255, 255, 0.7); }
+  &_light .timeline__shadow { background-color: rgba(226, 235, 239, 0.4); }
+  &_light .check__value { color: #43484b; }
 
   &_night { background-color: #242f3e; }
   &_night &__header { color: #fff; }
   &_night .timeline { background-color: #242f3e; }
-  &_night .timeline__shadow { background-color: rgba(31, 42, 56, 0.7); }
+  &_night .timeline__shadow { background-color: rgba(26, 35, 48, 0.4); }
+  &_night .check__value { color: #e8ecee; }
 }
 
 .change-mode-button {
-  font-size: 24px;
+  font-size: 20px;
   appearance: none;
   display: inline-flex;
   cursor: pointer;
@@ -80,30 +85,27 @@ body {
 .check {
   display: inline-flex;
   align-items: center;
-  border: 2px solid #e6ecf0;
+  border: 1px solid #e6ecf0;
   border-radius: 40px;
   height: 40px;
-  padding-left: 35px;
+  padding-left: 40px;
   padding-right: 15px;
   cursor: pointer;
   position: relative;
   margin-right: 15px;
+  margin-top: 15px;
+  -webkit-tap-highlight-color: transparent;
 
   &:last-child { margin-right: 0; }
 
-  &:before {
-    content: '';
+  &__box {
     width: 25px;
     height: 25px;
     border-radius: 50%;
     position: absolute;
-    top: 5px;
-    left: 5px;
-    background-color: red;
-    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3MCA3MCI+PHBhdGggZD0iTTI2LjQ3NCA3MGE2Ljk3MiA2Ljk3MiAwIDAgMS01LjU1Ny0yLjc2NEwzLjA0OSA0My42MzlhNi45NzEgNi45NzEgMCAwIDEgMTEuMTE2LTguNDE0bDExLjc1MiAxNS41MThMNTUuNDc0IDMuMjg1YTYuOTc3IDYuOTc3IDAgMCAxIDkuNjA0LTIuMjMyIDYuOTY5IDYuOTY5IDAgMCAxIDIuMjMgOS42MDJsLTM0LjkxNiA1Ni4wNkE2Ljk2NyA2Ljk2NyAwIDAgMSAyNi40NzQgNzB6IiBmaWxsPSIjZmZmIi8+PC9zdmc+);
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 12px;
+    top: 6px;
+    left: 6px;
+    border: 1px solid transparent;
   }
 
   &__input {
@@ -111,11 +113,28 @@ body {
     width: 0;
     height: 0;
     clip: rect(0, 0, 0, 0);
+
+    &:checked + .check__box {
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3MCA3MCI+PHBhdGggZD0iTTI2LjQ3NCA3MGE2Ljk3MiA2Ljk3MiAwIDAgMS01LjU1Ny0yLjc2NEwzLjA0OSA0My42MzlhNi45NzEgNi45NzEgMCAwIDEgMTEuMTE2LTguNDE0bDExLjc1MiAxNS41MThMNTUuNDc0IDMuMjg1YTYuOTc3IDYuOTc3IDAgMCAxIDkuNjA0LTIuMjMyIDYuOTY5IDYuOTY5IDAgMCAxIDIuMjMgOS42MDJsLTM0LjkxNiA1Ni4wNkE2Ljk2NyA2Ljk2NyAwIDAgMSAyNi40NzQgNzB6IiBmaWxsPSIjZmZmIi8+PC9zdmc+);
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: 12px;
+    }
+
+    &:not(:checked) + .check__box {
+      background-color: transparent !important;
+    }
+
+    &:disabled + .check__box {
+      opacity: .6;
+      filter: grayscale(10%);
+    }
   }
 
   &__value {
     font-size: 16px;
     color: #43484b;
+    user-select: none;
   }
 }
 
@@ -136,8 +155,8 @@ body {
 
   &__controller {
     position: absolute;
-    box-shadow: 0 -1px 0 0 red;
-    box-shadow: 0 1px 0 0 red;
+    border-top: 2px solid rgba(221, 234, 243, 0.7);
+    border-bottom: 2px solid rgba(221, 234, 243, 0.7);
     right: 0;
     top: 0;
     width: calc(100% / 6);
@@ -154,7 +173,7 @@ body {
     height: 100%;
     position: absolute;
     top: 0;
-    background-color: #ddeaf3;
+    background-color: rgba(221, 234, 243, 0.7);
     cursor: col-resize;
     user-select: none;
     outline: none;

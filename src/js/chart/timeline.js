@@ -1,4 +1,4 @@
-import { getGraphsValuesRange, drawLine, addDragListener } from '../utils/utils';
+import {getGraphsValuesRange, addDragListener, drawGraph} from '../utils/utils';
 
 export class Timeline {
   constructor(chart, config) {
@@ -59,12 +59,12 @@ export class Timeline {
       this.onRangeChanged();
     });
 
-    addDragListener(this.resizeLeft, (delta, ) => {
+    addDragListener(this.resizeLeft, (delta) => {
       const newControllerWidth = this.controller.offsetWidth + delta;
 
       const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
 
-      if (controllerRight + newControllerWidth > this.canvas.width || newControllerWidth <= this.canvas.width * (1 / 6)) { return; }
+      if (controllerRight + newControllerWidth > this.canvas.width || newControllerWidth <= this.canvas.width * (1 / 6)) { return false; }
 
       this.controller.style.width = newControllerWidth + 'px';
 
@@ -77,7 +77,7 @@ export class Timeline {
       const widthDiff = this.controller.offsetWidth - newControllerWidth;
       const newRight = controllerRight + widthDiff;
 
-      if (newRight < 0 || newControllerWidth <= this.canvas.width * (1 / 6)) { return; }
+      if (newRight < 0 || newControllerWidth <= this.canvas.width * (1 / 6)) { return false; }
 
       this.controller.style.right = newRight + 'px';
       this.controller.style.width = newControllerWidth + 'px';
@@ -109,7 +109,7 @@ export class Timeline {
     };
 
     const start = Math.floor(range.from / columnWidth);
-    const end = start + Math.floor(controllerWidth / columnWidth);
+    const end = start + Math.ceil(controllerWidth / columnWidth);
 
     return { start, end };
   }
@@ -118,25 +118,17 @@ export class Timeline {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     const graphs = this.chart.getVisibleGraphs();
-    const columnWidth = this.getColumnWidth();
-    const coef = (this.canvas.height - this.config.marginBottom - this.config.marginTop) / getGraphsValuesRange(graphs).max;
+    const graphsValuesRange = getGraphsValuesRange(graphs);
 
     Object.keys(graphs).forEach((key) => {
-      let x = 0;
-
-      for (let i = 0; i < this.chart.model[key].columns.length - 1; i++) {
-        drawLine(
-          this.ctx,
-          x,
-          this.canvas.height - this.chart.model[key].columns[i] * coef  - this.config.marginBottom,
-          x + columnWidth,
-          this.canvas.height - this.chart.model[key].columns[i + 1] * coef  - this.config.marginBottom,
-          this.chart.model[key].lineColor,
-          2
-        );
-
-        x += columnWidth;
-      }
+      drawGraph({
+        canvas: this.canvas,
+        ctx: this.ctx,
+        graph: graphs[key],
+        marginTop: this.config.marginTop,
+        marginBottom: this.config.marginBottom,
+        graphsValuesRange
+      });
     });
   }
 

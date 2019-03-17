@@ -2,6 +2,7 @@ import '../css/main.scss';
 
 import { ModeToggler } from './mode-toggler/mode-toggler';
 import { Chart } from './chart/chart';
+import { Switches } from './switches/switches';
 
 document.addEventListener('DOMContentLoaded', () => {
   window.modeToggler = new ModeToggler();
@@ -11,32 +12,21 @@ document.addEventListener('DOMContentLoaded', () => {
     .then((charts) => {
       console.log('>>> CHARTS', charts);
 
+      const data = charts[0];
+
       window.chart = new Chart({
         selector: '#chart',
         timeline: {
           enabled: true,
           selector: '#timeline'
         },
-        data: charts[0]
+        data
       });
 
-      const switches = document.querySelector('.chart__switches');
-
-      Object.keys(chart.getGraphs()).forEach((key) => {
-        const label = document.createElement('label');
-
-        label.classList.add('check');
-        label.innerHTML = `
-          <input class="check__input" type="checkbox" value="${key}" checked>
-          <span class="check__value">${charts[0].names[key]}</span>
-        `;
-
-        switches.appendChild(label);
-      });
+      window.switches = new Switches(chart);
 
       window.addEventListener('resize', () => {
         chart.onViewportResize();
-        chart.timeline && chart.timeline.onViewportResize();
       });
     });
 });

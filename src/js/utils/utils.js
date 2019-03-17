@@ -1,10 +1,11 @@
+const FPS_60 = 1000 / 60;
+
 export function getGraphsValuesRange(charts) {
   let minValue = 0;
   let maxValue = 0;
 
   Object.keys(charts).forEach((key) => {
-    const min = Math.min(...charts[key].columns);
-    const max = Math.max(...charts[key].columns);
+    const { min, max } = getGraphValuesRange(charts[key]);
 
     minValue = min < minValue ? min : minValue;
     maxValue = max > maxValue ? max : maxValue;
@@ -15,24 +16,13 @@ export function getGraphsValuesRange(charts) {
   return { min: minValue, max: maxValue };
 }
 
-/**
- * Draw line
- * @param {Object} ctx - canvas context
- * @param {number} fromX - moveToX
- * @param {number} fromY - moveToY
- * @param {number} toX - lineToX
- * @param {number} toY - lineY
- * @param {*} color - line color (hex, html, rgb, rgba)
- * @param {number} lineWidth - line width
- */
-export function drawLine(ctx, fromX = 0, fromY = 0, toX, toY, color = 'black', lineWidth = 1) {
-  ctx.beginPath();
-  ctx.moveTo(fromX, fromY);
-  ctx.lineTo(toX, toY);
-  ctx.lineWidth = lineWidth;
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = color;
-  ctx.stroke();
+export function getGraphValuesRange(graph) {
+  let min = Math.min(...graph.columns);
+  let max = Math.max(...graph.columns);
+
+  if (min > 0) { min = 0; }
+
+  return { min, max };
 }
 
 /**
@@ -64,29 +54,112 @@ function removeEventListeners(element, events, cb) {
   });
 }
 
+export function throttle(fn, ms) {
+  let isThrottled = false,
+    lastArgs,
+    lastThis;
+
+  function wrp() {
+    if (isThrottled) {
+      lastArgs = arguments;
+      lastThis = this;
+      return;
+    }
+
+    fn.apply(this, arguments);
+
+    isThrottled = true;
+
+    setTimeout(() => {
+      isThrottled = false;
+
+      if (lastArgs) {
+        wrp.apply(lastThis, lastArgs);
+        lastArgs = lastThis = null;
+      }
+    }, ms);
+  }
+
+  return wrp;
+}
+
 export function addDragListener(element, cb) {
   let beginEvent = null;
 
-  addEventListeners(element, 'mousedown touchstart', (event) => {
-    event.stopImmediatePropagation();
-    beginEvent = event;
-
-    addEventListeners(document, 'mousemove touchmove', onMouseMove);
-    addEventListeners(document, 'mouseup touchend', onMouseUp);
-  });
+  const throttledOnMouseMove = throttle(onMouseMove, FPS_60);
+  const throttledOnMouseUp = throttle(onMouseUp, FPS_60);
 
   function onMouseMove(event) {
     if (beginEvent === null) { return; }
 
-    cb(beginEvent.pageX - event.pageX);
+    if (cb(beginEvent.pageX - event.pageX) === false) { return; }
 
     beginEvent = event;
   }
 
   function onMouseUp() {
-    removeEventListeners(document, 'mousemove touchmove', onMouseMove);
-    removeEventListeners(document, 'mouseup touchend', onMouseUp);
+    removeEventListeners(document, 'mousemove touchmove', throttledOnMouseMove);
+    removeEventListeners(document, 'mouseup touchend', throttledOnMouseUp);
 
     beginEvent = null;
   }
+
+  addEventListeners(element, 'mousedown touchstart', (event) => {
+    event.stopImmediatePropagation();
+    beginEvent = event;
+
+    addEventListeners(document, 'mousemove touchmove', throttledOnMouseMove);
+    addEventListeners(document, 'mouseup touchend', throttledOnMouseUp);
+  });
+}
+
+export function drawGraph({
+                            canvas,
+                            ctx,
+                            graph,
+                            range,
+                            marginTop,
+                            marginBottom,
+                            graphsValuesRange
+                          } = {}) {
+  const margins = marginTop + marginBottom;
+  const scaling = (canvas.height - margins) / graphsValuesRange.max;
+
+  const columns = range
+    ? graph.columns.slice(range.start, range.end)
+    : graph.columns;
+
+  const columnWidth = canvas.width / (columns.length);
+
+  console.group('Draw graph');
+  console.log('Columns:', columns);
+  console.log('Column width:', columnWidth);
+  console.log('Margins:', margins);
+  console.log('Scaling', scaling);
+  console.groupEnd();
+
+  let x = 0;
+
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = graph.lineColor;
+
+  ctx.beginPath();
+
+  ctx.moveTo(x, round(canvas.height - marginBottom - (columns[0] * scaling)));
+
+  for (let i = 0; i < columns.length; i++) {
+    ctx.lineTo(x + columnWidth, round(canvas.height - marginBottom - (columns[i] * scaling)));
+    x += columnWidth;
+
+    // TODO: REMOVE
+    const measure = ctx.measureText(columns[i]);
+    drawText(ctx, columns[i], x - measure.width / 2, canvas.height - marginBottom - (columns[i] * scaling) - 10, 14, graph.lineColor);
+  }
+
+  ctx.stroke();
+}
+
+export function round(num) {
+  return (0.5 + num) << 0;
 }
