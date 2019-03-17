@@ -13,6 +13,7 @@
       <h1 class="chart__header">Followers</h1>
 
       <canvas id="chart"></canvas>
+
       <div class="timeline">
         <div class="timeline__shadow timeline__shadow_left"></div>
         <div class="timeline__shadow timeline__shadow_right"></div>
@@ -25,7 +26,9 @@
 
       <div class="chart__switches"></div>
 
-      <button class="change-mode-button" style="display: none;" onClick="modeToggler.toggle();"></button>
+      <div class="chart__footer">
+        <button class="change-mode-button" onClick="modeToggler.toggle(event);"></button>
+      </div>
     </div>
   </div>
 </body>

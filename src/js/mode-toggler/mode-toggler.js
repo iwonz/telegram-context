@@ -19,7 +19,9 @@ export class ModeToggler {
     this.update();
   }
 
-  toggle() {
+  toggle(event) {
+    event.preventDefault();
+
     this.mode = +!this.mode;
 
     this.update();

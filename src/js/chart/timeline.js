@@ -2,8 +2,6 @@ import { getGraphsValuesRange, drawLine, addDragListener } from '../utils/utils'
 
 export class Timeline {
   constructor(chart, config) {
-    this._controllerHooked = null;
-
     this.chart = chart;
 
     this.config = Object.assign({}, {
@@ -17,8 +15,7 @@ export class Timeline {
     }, config);
 
     this.canvas = document.querySelector(this.config.selector);
-    this.canvas.width = this.canvas.parentNode.offsetWidth;
-    this.canvas.height = this.chart.canvas.height * 0.25;
+    this.updateCanvasSize();
     this.ctx = this.canvas.getContext('2d');
 
     this.controller = document.querySelector(this.config.controller.selector);
@@ -29,8 +26,17 @@ export class Timeline {
 
     this.addEventListeners();
 
+    this.draw();
+  }
+
+  draw() {
     this.drawGraphs();
     this.updateShadows();
+  }
+
+  updateCanvasSize() {
+    this.canvas.width = this.canvas.parentNode.offsetWidth;
+    this.canvas.height = this.chart.canvas.height * 0.25;
   }
 
   onRangeChanged() {
@@ -58,7 +64,7 @@ export class Timeline {
 
       const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
 
-      if (controllerRight + newControllerWidth > this.canvas.width) { return; }
+      if (controllerRight + newControllerWidth > this.canvas.width || newControllerWidth <= this.canvas.width * (1 / 6)) { return; }
 
       this.controller.style.width = newControllerWidth + 'px';
 
@@ -66,12 +72,14 @@ export class Timeline {
     });
 
     addDragListener(this.resizeRight, (delta) => {
-      const newControllerWidth = this.controller.offsetWidth - delta;
       const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
-
+      const newControllerWidth = this.controller.offsetWidth - delta;
       const widthDiff = this.controller.offsetWidth - newControllerWidth;
+      const newRight = controllerRight + widthDiff;
 
-      this.controller.style.right = controllerRight + widthDiff + 'px';
+      if (newRight < 0 || newControllerWidth <= this.canvas.width * (1 / 6)) { return; }
+
+      this.controller.style.right = newRight + 'px';
       this.controller.style.width = newControllerWidth + 'px';
 
       this.onRangeChanged();
@@ -130,5 +138,11 @@ export class Timeline {
         x += columnWidth;
       }
     });
+  }
+
+  onViewportResize() {
+    this.updateCanvasSize();
+
+    this.draw();
   }
 }

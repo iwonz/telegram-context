@@ -68,7 +68,7 @@ export function addDragListener(element, cb) {
   let beginEvent = null;
 
   addEventListeners(element, 'mousedown touchstart', (event) => {
-    event.stopPropagation();
+    event.stopImmediatePropagation();
     beginEvent = event;
 
     addEventListeners(document, 'mousemove touchmove', onMouseMove);

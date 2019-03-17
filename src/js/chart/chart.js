@@ -23,8 +23,7 @@ export class Chart {
     this.model = this.getModel(this.config.data);
 
     this.canvas = document.querySelector(this.config.selector);
-    this.canvas.width = this.canvas.parentNode.offsetWidth;
-    this.canvas.height = this.canvas.parentNode.offsetHeight * 0.4;
+    this.updateCanvasSize();
     this.ctx = this.canvas.getContext('2d');
 
     if (config.timeline.enabled) {
@@ -37,6 +36,11 @@ export class Chart {
     }
 
     this.draw();
+  }
+
+  updateCanvasSize() {
+    this.canvas.width = this.canvas.parentNode.offsetWidth;
+    this.canvas.height = this.canvas.parentNode.offsetHeight * 0.4;
   }
 
   getModel(data) {
@@ -150,5 +154,11 @@ export class Chart {
 
       if (value < valueByDelimiter) { value = 0; }
     }
+  }
+
+  onViewportResize() {
+    this.updateCanvasSize();
+
+    this.draw();
   }
 }

@@ -28,10 +28,15 @@ document.addEventListener('DOMContentLoaded', () => {
         label.classList.add('check');
         label.innerHTML = `
           <input class="check__input" type="checkbox" value="${key}" checked>
-          <span class="check__value" >${charts[0].names[key]}</span>
+          <span class="check__value">${charts[0].names[key]}</span>
         `;
 
         switches.appendChild(label);
+      });
+
+      window.addEventListener('resize', () => {
+        chart.onViewportResize();
+        chart.timeline && chart.timeline.onViewportResize();
       });
     });
 });
