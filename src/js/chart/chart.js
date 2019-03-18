@@ -1,6 +1,6 @@
 import { Timeline } from './timeline';
 
-import { getGraphsValuesRange, drawText, drawGraph, round } from '../utils/utils';
+import { getGraphsValuesRange, drawText, drawGraph, round, animate } from '../utils/utils';
 
 export class Chart {
   constructor(config) {
@@ -58,11 +58,20 @@ export class Chart {
   }
 
   draw() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    let scale = 0;
+    this.ctx.scale(0, 0);
+    animate(() => {
+      scale += 0.01;
 
-    this.drawYLines();
-    this.drawGraphs();
-    this.drawYValues();
+      this.ctx.scale(2, 2);
+    }, () => {
+      this.ctx.scale(0, 0);
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      this.drawYLines();
+      this.drawGraphs();
+      this.drawYValues();
+    }, 100);
   }
 
   /**
