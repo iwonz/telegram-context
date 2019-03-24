@@ -1,54 +1,51 @@
-const FPS_60 = 1000 / 60;
+export const FPS_60 = 1000 / 60;
 
-export function getGraphsValuesRange(charts) {
-  let minValue = 0;
-  let maxValue = 0;
+export function getGraphsValuesRange(graphs, range) {
+  let minValues = [0];
+  let maxValues = [];
 
-  Object.keys(charts).forEach((key) => {
-    const { min, max } = getGraphValuesRange(charts[key]);
+  Object.keys(graphs).forEach((key) => {
+    const { min, max } = getGraphValuesRange(graphs[key], range);
 
-    minValue = min < minValue ? min : minValue;
-    maxValue = max > maxValue ? max : maxValue;
+    minValues.push(min);
+    maxValues.push(max);
   });
 
-  if (minValue > 0) { minValue = 0; }
-
-  return { min: minValue, max: maxValue };
-}
-
-export function getGraphValuesRange(graph) {
-  let min = Math.min(...graph.columns);
-  let max = Math.max(...graph.columns);
-
-  if (min > 0) { min = 0; }
+  let min = Math.min.apply(Math, minValues);
+  let max = Math.max.apply(Math, maxValues);
 
   return { min, max };
 }
 
-/**
- * Draw text
- * @param {Object} ctx - canvas context
- * @param {string} text - text to draw
- * @param {number} x - text x position
- * @param {number} y - text y position
- * @param {number} fontSize - font size (without measure)
- * @param {*} color - font color (hex, html, rgb, rgba)
- * @param {string} font - font family
- */
-export function drawText(ctx, text, x, y, fontSize, color, font = 'Arial, Tahoma') {
+export function getGraphValuesRange(graph, range) {
+  const columns = range
+    ? graph.columns.slice(range.start, range.end)
+    : graph.columns;
+
+  let min = Math.min.apply(Math, columns);
+  let max = Math.max.apply(Math, columns);
+
+  // if (min > 0) { min = 0; }
+
+  return { min, max };
+}
+
+export function drawText(ctx, text, x, y, fontSize, color, font) {
+  font = font || 'Arial, Tahoma';
+
   ctx.font = `${fontSize}px ${font}`;
   ctx.fillStyle = color;
 
   ctx.fillText(text, x, y);
 }
 
-function addEventListeners(element, events, cb) {
+export function addEventListeners(element, events, cb) {
   events.split(' ').forEach((event) => {
     element.addEventListener(event, cb);
   });
 }
 
-function removeEventListeners(element, events, cb) {
+export function removeEventListeners(element, events, cb) {
   events.split(' ').forEach((event) => {
     element.removeEventListener(event, cb);
   });
@@ -83,6 +80,25 @@ export function throttle(fn, ms) {
   return wrp;
 }
 
+export function debounce(f, ms) {
+  let timer = null;
+
+  return function () {
+    const args = [].slice.call(arguments);
+
+    const onComplete = () => {
+      f.apply(this, args);
+      timer = null;
+    };
+
+    if (timer) {
+      clearTimeout(timer);
+    }
+
+    timer = setTimeout(onComplete, ms);
+  };
+}
+
 export function addDragListener(element, cb) {
   let beginEvent = null;
 
@@ -113,74 +129,57 @@ export function addDragListener(element, cb) {
   });
 }
 
-export function drawGraph({
-                            canvas,
-                            ctx,
-                            graph,
-                            range,
-                            marginTop,
-                            marginBottom,
-                            graphsValuesRange
-                          } = {}) {
-  const margins = marginTop + marginBottom;
-  const scaling = (canvas.height - margins) / graphsValuesRange.max;
+export function getGraphDrawer(context) {
+  const canvas = context.canvas;
+  const ctx = context.ctx;
 
-  const columns = range
-    ? graph.columns.slice(range.start, range.end)
-    : graph.columns;
+  return function ({
+                     graph,
+                     range,
+                     marginTop,
+                     marginBottom,
+                     graphsValuesRange,
+                     lineWidth
+                   } = {}) {
+    const scaling = getScaling(canvas.height - (marginTop + marginBottom), graphsValuesRange);
 
-  const columnWidth = canvas.width / (columns.length);
+    const columns = range
+      ? graph.columns.slice(range.start, range.end)
+      : graph.columns;
 
-  console.group('Draw graph');
-  console.log('Columns:', columns);
-  console.log('Column width:', columnWidth);
-  console.log('Margins:', margins);
-  console.log('Scaling', scaling);
-  console.groupEnd();
+    const columnWidth = getColumnWidth(canvas.width, columns);
+    const startFrom = canvas.height - marginBottom;
 
-  let x = 0;
+    let x = 0;
 
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = graph.lineColor;
+    ctx.lineWidth = lineWidth || 1;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = graph.lineColor;
 
-  ctx.beginPath();
+    ctx.beginPath();
+    ctx.moveTo(x, round(startFrom - columns[0] * scaling));
 
-  ctx.moveTo(x, round(canvas.height - marginBottom - (columns[0] * scaling)));
+    for (let i = 1; i < columns.length; i++) {
+      ctx.lineTo(x + columnWidth, round(startFrom - (columns[i] * scaling)));
 
-  for (let i = 0; i < columns.length; i++) {
-    ctx.lineTo(x + columnWidth, round(canvas.height - marginBottom - (columns[i] * scaling)));
-    x += columnWidth;
+      x += columnWidth;
 
-    // TODO: REMOVE
-    const measure = ctx.measureText(columns[i]);
-    drawText(ctx, columns[i], x - measure.width / 2, canvas.height - marginBottom - (columns[i] * scaling) - 10, 14, graph.lineColor);
+      // TODO: REMOVE
+      // drawText(ctx, columns[i], x, round(canvasHeight - columns[i] * scaling), 14, '#000');
+    }
+
+    ctx.stroke();
   }
-
-  ctx.stroke();
 }
 
 export function round(num) {
   return (0.5 + num) << 0;
 }
 
-export function animate(options) {
-  var start = performance.now();
+export function getColumnWidth(width, columns, range) {
+  return width / (range ? Math.abs(range.end - range.start) - 1 : columns.length - 1);
+}
 
-  requestAnimationFrame(function animate(time) {
-    // timeFraction от 0 до 1
-    var timeFraction = (time - start) / options.duration;
-    if (timeFraction > 1) timeFraction = 1;
-
-    // текущее состояние анимации
-    var progress = options.timing(timeFraction);
-
-    options.draw(progress);
-
-    if (timeFraction < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      options.end();
-    }
-  });
+export function getScaling(height, range) {
+  return height / range.max;
 }

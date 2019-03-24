@@ -1,46 +1,109 @@
 import { Timeline } from './timeline';
+import { Balloon } from './baloon';
 
-import { getGraphsValuesRange, drawText, drawGraph, round, animate } from '../utils/utils';
+import { getGraphsValuesRange, drawText, getGraphDrawer, round, debounce } from '../utils/utils';
+
+export const MARGIN_TOP = 20;
+export const MARGIN_BOTTOM = 30;
+export const MARGINS = MARGIN_TOP + MARGIN_BOTTOM;
+const FONT_SIZE = 16;
+const X_VALUES = 6;
+const Y_VALUES = 6;
+
+let uniqueId = 0;
 
 export class Chart {
   constructor(config) {
-    this.config = Object.assign({}, {
-      selector: '#chart',
-      marginTop: 20,
-      marginBottom: 40,
-      fontSize: 16,
-      sections: {
-        x: 6,
-        y: 6
-      },
-      timeline: {
-        enabled: true,
-        selector: '#timeline'
-      },
-      data: null
-    }, config);
+    this.uniqueId = ++uniqueId;
+    this.selector = '#chart-' + this.uniqueId;
+
+    this.config = config;
 
     this.model = this.getModel(this.config.data);
 
-    this.canvas = document.querySelector(this.config.selector);
+    this.drawTemplate();
+
+    requestAnimationFrame(() => {
+      this.initElements();
+      this.draw();
+    });
+  }
+
+  onViewportResize = debounce(() => {
+    this.updateCanvasSize();
+    this.draw();
+
+    this.timeline.onViewportResize();
+    this.balloon.onViewportResize();
+  }, 100);
+
+  drawTemplate() {
+    const chart = document.createElement('div');
+
+    chart.classList.add('chart');
+    chart.id = this.selector.slice(1);
+
+    chart.innerHTML = document.querySelector('.chart-template').innerHTML;
+
+    document.querySelector(this.config.appendTo || 'body').appendChild(chart);
+  }
+
+  initElements() {
+    this.wrapper = document.querySelector(this.selector);
+    this.canvas = this.wrapper.querySelector('.chart-canvas');
     this.updateCanvasSize();
     this.ctx = this.canvas.getContext('2d');
 
-    if (config.timeline.enabled) {
-      this.timeline = new Timeline(this, {
-        ...this.config.timeline,
+    this.balloon = new Balloon(this);
+    this.timeline = new Timeline(
+      this,
+      {
         onRangeChange: () => {
           this.draw();
         }
+      }
+    );
+
+    this.drawSwitches();
+  }
+
+  drawSwitches() {
+    const switchesWrapper = this.wrapper.querySelector('.chart__switches');
+
+    Object.keys(this.getGraphs()).forEach((key) => {
+      const label = document.createElement('label');
+
+      label.classList.add('check');
+      label.innerHTML = `
+        <input class="check__input" type="checkbox" value="${key}" checked>
+        <span class="check__box" style="border-color: ${this.model[key].lineColor}; background-color: ${this.model[key].lineColor};"></span>
+        <span class="check__value">${this.model[key].name}</span>
+      `;
+
+      switchesWrapper.appendChild(label);
+
+      label.querySelector('.check__input').addEventListener('change', (event) => {
+        this.toggleGraphVisible(event.target.value, event.target.checked);
+        this.updateDisabledSwitches();
       });
+    });
+
+    this.updateDisabledSwitches();
+  }
+
+  updateDisabledSwitches() {
+    const checked = this.wrapper.querySelectorAll('.check .check__input:checked');
+
+    if (checked.length === 1) {
+      return checked[0].disabled = true;
     }
 
-    this.draw();
+    [].slice.call(checked).forEach((check) => check.disabled = false);
   }
 
   updateCanvasSize() {
     this.canvas.width = this.canvas.parentNode.offsetWidth;
-    this.canvas.height = this.canvas.parentNode.offsetHeight * 0.4;
+    this.canvas.height = Math.max(window.innerHeight * 0.4, 180);
   }
 
   getModel(data) {
@@ -58,37 +121,18 @@ export class Chart {
   }
 
   draw() {
-    let scale = 0;
-    this.ctx.scale(0, 0);
-    animate(() => {
-      scale += 0.01;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      this.ctx.scale(2, 2);
-    }, () => {
-      this.ctx.scale(0, 0);
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-      this.drawYLines();
-      this.drawGraphs();
-      this.drawYValues();
-    }, 100);
+    this.drawYLines();
+    this.drawGraphs();
+    this.drawXValues();
+    this.drawYValues();
   }
 
-  /**
-   * Return only visible graphs
-   */
-  getVisibleGraphs() {
+  getGraphs(isOnlyVisible) {
     return Object.keys(this.model).reduce((graphs, key) => {
-      if (key !== 'x' && this.model[key].visible) {
-        graphs[key] = this.model[key];
-      }
+      if (isOnlyVisible && !this.model[key].visible) { return graphs; }
 
-      return graphs;
-    }, {});
-  }
-
-  getGraphs() {
-    return Object.keys(this.model).reduce((graphs, key) => {
       if (key !== 'x') {
         graphs[key] = this.model[key];
       }
@@ -97,37 +141,42 @@ export class Chart {
     }, {});
   }
 
+  getDates(range) {
+    return range
+      ? this.model.x.columns.slice(range.start, range.end)
+      : this.model.x.columns;
+  }
+
   drawGraphs() {
-    const graphs = this.getVisibleGraphs();
-    const graphsValuesRange = getGraphsValuesRange(graphs);
+    const drawGraph = getGraphDrawer(this);
+
+    const graphs = this.getGraphs(true);
 
     Object.keys(graphs).forEach((key) => {
       drawGraph({
-        canvas: this.canvas,
-        ctx: this.ctx,
         graph: graphs[key],
-        range: this.timeline.getRange(),
-        marginTop: this.config.marginTop,
-        marginBottom: this.config.marginBottom,
-        graphsValuesRange
+        range: this.timeline.range,
+        marginTop: MARGIN_TOP,
+        marginBottom: MARGIN_BOTTOM,
+        graphsValuesRange: getGraphsValuesRange(graphs, this.timeline.range),
+        lineWidth: 3
       });
     });
   }
 
   drawYLines() {
-    const margins = this.config.marginBottom + this.config.marginTop;
-    let heightByDelimiter = (this.canvas.height - margins) / (this.config.sections.y - 1);
+    const linesCount = this.canvas.height < 300 ? 3 : Y_VALUES;
+    let heightByDelimiter = (this.canvas.height - MARGINS) / (linesCount - 1);
 
-    this.ctx.lineWidth = 2;
-    this.ctx.lineCap = 'round';
-    this.ctx.strokeStyle = 'rgba(242, 244, 245, 1)';
-    // this.ctx.strokeStyle = '#000';
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeStyle = document.body.classList.contains('_night')
+      ? 'rgba(242, 244, 245, 0.1)'
+      : 'rgba(242, 244, 245, 0.7)';
 
-    for (let i = 0; i < this.config.sections.y; i++) {
-      let x = 0,
-          y = round(heightByDelimiter * i + this.config.marginTop);
+    let x = 0, y = 0;
 
-      console.log(y, heightByDelimiter);
+    for (let i = 0; i < linesCount; i++) {
+      y = round(this.canvas.height - (heightByDelimiter * i) - MARGIN_BOTTOM);
 
       this.ctx.beginPath();
       this.ctx.moveTo(x, y);
@@ -136,31 +185,51 @@ export class Chart {
     }
   }
 
-  /**
-   * Draw Y axis
-   */
   drawYValues() {
-    const valuesRanges = getGraphsValuesRange(this.getVisibleGraphs());
+    const linesCount = this.canvas.height < 300 ? 3 : Y_VALUES;
+    const valuesRanges = getGraphsValuesRange(this.getGraphs(true), this.timeline.range);
 
-    let value = valuesRanges.max;
+    let x = 5, y, value = valuesRanges.min;
 
-    const margins = this.config.marginBottom + this.config.marginTop;
-    let heightByDelimiter = (this.canvas.height - margins) / (this.config.sections.y - 1);
-    let valueByDelimiter = (Math.abs(valuesRanges.min) + valuesRanges.max) / this.config.sections.y;
+    let heightByDelimiter = (this.canvas.height - MARGINS) / (linesCount - 1);
+    let valueByDelimiter = (valuesRanges.max - valuesRanges.min) / (linesCount - 1);
 
-    for (let i = 0; i < this.config.sections.y; i++) {
-      let x = 0,
-        y = round(heightByDelimiter * i + this.config.marginTop);
+    for (let i = 0; i < linesCount; i++) {
+      y = round(this.canvas.height - (heightByDelimiter * i) - MARGIN_BOTTOM);
 
-      drawText(this.ctx, value.toLocaleString(), x, y - 5, this.config.fontSize, '#546778');
+      drawText(this.ctx, round(value).toLocaleString(), x, y - 5, FONT_SIZE, '#96a2aa');
 
-      value = round(value - valueByDelimiter);
-
-      if (value <= valueByDelimiter) { value = 0; }
+      value = value >= valuesRanges.max ? valuesRanges.max : value + valueByDelimiter;
     }
   }
 
-  toggleGraphVisible(graphName, isVisible = true) {
+  drawXValues() {
+    const datesCount = this.canvas.width < 420 ? 3 : X_VALUES;
+
+    const dates = this.getDates(this.timeline.range);
+
+    const stepByDateRange = round(dates.length / datesCount);
+    let dateIndex = 0;
+
+    const widthByDate = this.canvas.width / datesCount - 1;
+
+    let x = 15, y = this.canvas.height - 10;
+
+    for (let i = 0; i < datesCount; i++) {
+      const dateString = new Date(dates[dateIndex]).toLocaleDateString(navigator.language || navigator.userLanguage, {
+        month: 'short',
+        day: 'numeric'
+      });
+
+      drawText(this.ctx, dateString, x, y, FONT_SIZE, '#96a2aa');
+
+      dateIndex += stepByDateRange;
+
+      x += widthByDate + 15;
+    }
+  }
+
+  toggleGraphVisible(graphName, isVisible) {
     Object.keys(this.model).forEach((key) => {
       if (key === graphName) {
         this.model[key].visible = isVisible;
@@ -168,15 +237,14 @@ export class Chart {
     }, {});
 
     this.draw();
-
-    this.timeline && this.timeline.draw();
+    this.timeline.draw();
   }
 
-  onViewportResize() {
-    this.updateCanvasSize();
+  onColorModeChange() {
+    this.wrapper.classList.toggle('chart_night');
 
     this.draw();
 
-    this.timeline && this.timeline.onViewportResize();
+    this.balloon.onColorModeChange();
   }
 }

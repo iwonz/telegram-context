@@ -1,48 +1,49 @@
-import {getGraphsValuesRange, addDragListener, drawGraph} from '../utils/utils';
+import { getGraphsValuesRange, addDragListener, getGraphDrawer } from '../utils/utils';
+
+const MARGIN_TOP = 4;
+const MARGIN_BOTTOM = 4;
 
 export class Timeline {
   constructor(chart, config) {
     this.chart = chart;
+    this.config = config;
 
-    this.config = Object.assign({}, {
-      selector: '#timeline',
-      marginTop: 4,
-      marginBottom: 4,
-      controller: {
-        selector: '.timeline__controller',
-      },
-      height: 80
-    }, config);
+    this.range = {};
 
-    this.canvas = document.querySelector(this.config.selector);
+    this.initElements();
+    this.addEventListeners();
+    this.draw();
+    this.updateRange();
+  }
+
+  initElements() {
+    const chartWrapper = document.querySelector(this.chart.selector);
+    this.canvas = chartWrapper.querySelector('.tl-canvas');
     this.updateCanvasSize();
     this.ctx = this.canvas.getContext('2d');
 
-    this.controller = document.querySelector(this.config.controller.selector);
-    this.shadowLeft = document.querySelector('.timeline__shadow_left');
-    this.shadowRight = document.querySelector('.timeline__shadow_right');
-    this.resizeLeft = document.querySelector('.timeline__controller-resize_left');
-    this.resizeRight = document.querySelector('.timeline__controller-resize_right');
-
-    this.addEventListeners();
-
-    this.draw();
+    this.controller = chartWrapper.querySelector('.tl__ctrl');
+    this.shadowLeft = chartWrapper.querySelector('.tl__shadow_lt');
+    this.shadowRight = chartWrapper.querySelector('.tl__shadow_rt');
+    this.resizeLeft = chartWrapper.querySelector('.tl__ctrl-resize_lt');
+    this.resizeRight = chartWrapper.querySelector('.tl__ctrl-resize_rt');
   }
 
   draw() {
-    this.drawGraphs();
-    this.updateShadows();
+    requestAnimationFrame(() => this.drawGraphs());
+    requestAnimationFrame(() => this.updateShadows());
   }
 
   updateCanvasSize() {
     this.canvas.width = this.canvas.parentNode.offsetWidth;
-    this.canvas.height = this.chart.canvas.height * 0.25;
+    this.canvas.height = Math.max(window.innerHeight * 0.15, 70);
   }
 
   onRangeChanged() {
     this.updateShadows();
+    this.updateRange();
 
-    this.config.onRangeChange(this.getRange());
+    this.config.onRangeChange(this.range);
   }
 
   addEventListeners() {
@@ -64,7 +65,7 @@ export class Timeline {
 
       const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
 
-      if (controllerRight + newControllerWidth > this.canvas.width || newControllerWidth <= this.canvas.width * (1 / 6)) { return false; }
+      if (controllerRight + newControllerWidth > this.canvas.width || newControllerWidth <= this.canvas.width * (1 / 4)) { return false; }
 
       this.controller.style.width = newControllerWidth + 'px';
 
@@ -77,7 +78,7 @@ export class Timeline {
       const widthDiff = this.controller.offsetWidth - newControllerWidth;
       const newRight = controllerRight + widthDiff;
 
-      if (newRight < 0 || newControllerWidth <= this.canvas.width * (1 / 6)) { return false; }
+      if (newRight < 0 || newControllerWidth <= this.canvas.width * (1 / 4)) { return false; }
 
       this.controller.style.right = newRight + 'px';
       this.controller.style.width = newControllerWidth + 'px';
@@ -93,15 +94,11 @@ export class Timeline {
     this.shadowRight.style.width = controllerRight + 'px';
   }
 
-  getColumnWidth() {
-    return this.canvas.width / this.chart.model.x.columns.length;
-  }
-
-  getRange() {
+  updateRange() {
     const controllerRight = parseInt(getComputedStyle(this.controller).right, 10);
     const controllerWidth = this.controller.offsetWidth;
 
-    const columnWidth = this.getColumnWidth();
+    const columnWidth = this.canvas.width / this.chart.model.x.columns.length;
 
     const range = {
       from: this.canvas.width - controllerRight - controllerWidth,
@@ -111,29 +108,31 @@ export class Timeline {
     const start = Math.floor(range.from / columnWidth);
     const end = start + Math.ceil(controllerWidth / columnWidth);
 
-    return { start, end };
+    this.range = { start, end };
   }
 
   drawGraphs() {
+    const drawGraph = getGraphDrawer(this);
+
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const graphs = this.chart.getVisibleGraphs();
+    const graphs = this.chart.getGraphs(true);
     const graphsValuesRange = getGraphsValuesRange(graphs);
 
     Object.keys(graphs).forEach((key) => {
       drawGraph({
-        canvas: this.canvas,
-        ctx: this.ctx,
         graph: graphs[key],
-        marginTop: this.config.marginTop,
-        marginBottom: this.config.marginBottom,
-        graphsValuesRange
+        marginTop: MARGIN_TOP,
+        marginBottom: MARGIN_BOTTOM,
+        graphsValuesRange,
+        lineWidth: 2
       });
     });
   }
 
   onViewportResize() {
     this.updateCanvasSize();
+    this.controller.style.right = '0px';
 
     this.draw();
   }

@@ -4,6 +4,7 @@ import babel from 'rollup-plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 import copy from 'rollup-plugin-copy-glob';
 import browsersync from 'rollup-plugin-browsersync';
+import compiler from '@ampproject/rollup-plugin-closure-compiler';
 
 const isProduction = process.env.MODE !== 'development';
 
@@ -17,7 +18,10 @@ const plugins = [
   }),
   babel({
     exclude: 'node_modules/**',
-    presets: ['@babel/preset-env']
+    presets: ['@babel/preset-env'],
+    plugins: [
+      '@babel/plugin-proposal-class-properties'
+    ]
   }),
   copy([
     { files: 'src/assets/**/*', dest: 'dist/assets' }
@@ -26,7 +30,12 @@ const plugins = [
 
 if (isProduction) {
   plugins.push(
-    terser()
+    compiler(),
+    // terser({
+    //   mangle: {
+    //     properties: true
+    //   }
+    // })
   );
 } else {
   plugins.push(
@@ -45,7 +54,7 @@ export default {
   input: 'src/js/index.js',
   output: {
     file: 'dist/js/bundle.js',
-    format: 'umd'
+    format: 'iife'
   },
   plugins
 };

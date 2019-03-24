@@ -1,32 +1,29 @@
 import '../css/main.scss';
 
-import { ModeToggler } from './mode-toggler/mode-toggler';
 import { Chart } from './chart/chart';
-import { Switches } from './switches/switches';
+
+(() => {
+  let requestAnimationFrame = window.requestAnimationFrame
+    || window.mozRequestAnimationFrame
+    || window.webkitRequestAnimationFrame
+    || window.msRequestAnimationFrame;
+
+  window.requestAnimationFrame = requestAnimationFrame;
+})();
 
 document.addEventListener('DOMContentLoaded', () => {
-  window.modeToggler = new ModeToggler();
+  const chartsInstances = [];
 
-  fetch('./assets/chart_data.json')
-    .then((response) => response.json())
-    .then((charts) => {
-      console.log('>>> CHARTS', charts);
+  charts.forEach((data, i) => {
+    chartsInstances.push(new Chart({ data, appendTo: '.charts__content' }));
+  });
 
-      const data = charts[0];
+  window.toggleMode = () => {
+    document.querySelector('.mode-btn').classList.toggle('mode-btn_night');
+    document.body.classList.toggle('_night');
 
-      window.chart = new Chart({
-        selector: '#chart',
-        timeline: {
-          enabled: true,
-          selector: '#timeline'
-        },
-        data
-      });
+    chartsInstances.forEach((chart) => chart.onColorModeChange());
+  };
 
-      window.switches = new Switches(chart);
-
-      window.addEventListener('resize', () => {
-        chart.onViewportResize();
-      });
-    });
+  window.addEventListener('resize', () => chartsInstances.forEach((chart) => chart.onViewportResize()));
 });

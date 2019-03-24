@@ -12,7 +12,9 @@
   "author": "iwonz",
   "license": "ISC",
   "devDependencies": {
+    "@ampproject/rollup-plugin-closure-compiler": "^0.8.5",
     "@babel/core": "^7.3.4",
+    "@babel/plugin-proposal-class-properties": "^7.4.0",
     "@babel/preset-env": "^7.3.4",
     "node-sass": "^4.11.0",
     "postcss-preset-env": "^6.6.0",
