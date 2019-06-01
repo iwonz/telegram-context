@@ -7,15 +7,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup -c",
-    "dev": "rollup -c -w --environment MODE:development"
+    "start": "rollup -c -w --environment MODE:development",
+    "deploy": "rollup -c && gh-pages -d dist"
   },
   "author": "iwonz",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@ampproject/rollup-plugin-closure-compiler": "^0.8.5",
     "@babel/core": "^7.3.4",
     "@babel/plugin-proposal-class-properties": "^7.4.0",
     "@babel/preset-env": "^7.3.4",
+    "gh-pages": "^2.0.1",
     "node-sass": "^4.11.0",
     "postcss-preset-env": "^6.6.0",
     "postcss-scss": "^2.0.0",
@@ -24,7 +26,6 @@
     "rollup-plugin-browsersync": "^1.0.0",
     "rollup-plugin-copy-glob": "^0.3.0",
     "rollup-plugin-fill-html": "^1.1.0",
-    "rollup-plugin-postcss": "^2.0.3",
-    "rollup-plugin-terser": "^4.0.4"
+    "rollup-plugin-postcss": "^2.0.3"
   }
 }

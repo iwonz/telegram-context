@@ -1,10 +1,9 @@
 import html from 'rollup-plugin-fill-html';
 import postcss from 'rollup-plugin-postcss';
 import babel from 'rollup-plugin-babel';
-import { terser } from 'rollup-plugin-terser';
 import copy from 'rollup-plugin-copy-glob';
 import browsersync from 'rollup-plugin-browsersync';
-import compiler from '@ampproject/rollup-plugin-closure-compiler';
+import gcc from '@ampproject/rollup-plugin-closure-compiler';
 
 const isProduction = process.env.MODE !== 'development';
 
@@ -30,12 +29,7 @@ const plugins = [
 
 if (isProduction) {
   plugins.push(
-    compiler(),
-    // terser({
-    //   mangle: {
-    //     properties: true
-    //   }
-    // })
+    gcc()
   );
 } else {
   plugins.push(
@@ -54,7 +48,7 @@ export default {
   input: 'src/js/index.js',
   output: {
     file: 'dist/js/bundle.js',
-    format: 'iife'
+    format: 'umd'
   },
   plugins
 };
